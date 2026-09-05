@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harvestline — Crop Yield Forecasting</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,450;9..144,560;9..144,680&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="grain-overlay" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M16 30V10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M16 12C16 12 10 11 8 5C14 5 16 12 16 12Z" fill="currentColor"/>
+        <path d="M16 16C16 16 8.5 15 6 8C13.5 8 16 16 16 16Z" fill="currentColor"/>
+        <path d="M16 20C16 20 24 19 26 12C18.5 12 16 20 16 20Z" fill="currentColor"/>
+      </svg>
+      <span class="brand-name">Harvestline</span>
+    </div>
+    <nav class="topnav">
+      <a href="#predict">Forecast</a>
+      <a href="#xai-section">Explainable AI</a>
+      <a href="#trend">History</a>
+      <a href="#geo-map">Global Map</a>
+      <a href="#eval-dashboard">Evaluation</a>
+      <a href="#model">Model</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <section class="hero">
+    <div class="hero-inner">
+      <p class="eyebrow">Academic Edition · Random Forest, trained on FAO yield data 1990–2013</p>
+      <h1 class="hero-title">Every harvest starts as<br><em>a line in the ledger.</em></h1>
+      <p class="hero-sub">Pick a country, a crop and a season's conditions — Harvestline predicts yield per hectare, explains feature contributions (XAI), simulates climate scenarios, and benchmarks model accuracy.</p>
+    </div>
+  </section>
+
+  <section id="predict" class="workspace">
+    <div class="workspace-inner">
+
+      <!-- LEFT: INPUT LEDGER -->
+      <form class="ledger" id="ledger-form" autocomplete="off">
+        <div class="ledger-head">
+          <span class="ledger-index">01</span>
+          <div>
+            <h2>Set the season</h2>
+            <p>Choose a place and crop, then tune growing conditions or run a climate scenario.</p>
+          </div>
+        </div>
+
+        <div class="field-row two">
+          <div class="field">
+            <label for="area">Country</label>
+            <select id="area" name="area" required></select>
+          </div>
+          <div class="field">
+            <label for="item">Crop</label>
+            <select id="item" name="item" required></select>
+          </div>
+        </div>
+
+        <button type="button" id="autofill-btn" class="ghost-btn" disabled>
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true"><path d="M8 1v3M8 12v3M1 8h3M12 8h3M3.3 3.3l2.1 2.1M10.6 10.6l2.1 2.1M12.7 3.3l-2.1 2.1M5.4 10.6l-2.1 2.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          <span>Fill with this region's historical average</span>
+        </button>
+
+        <!-- CLIMATE SCENARIO SIMULATOR PRESETS -->
+        <div class="scenario-box">
+          <span class="scenario-title">🌦️ Climate Scenario Simulator ("What-If"):</span>
+          <div class="scenario-buttons">
+            <button type="button" class="scenario-btn" data-scenario="ipcc15">☀️ +1.5°C Warming</button>
+            <button type="button" class="scenario-btn" data-scenario="drought">🔥 Heatwave & Drought</button>
+            <button type="button" class="scenario-btn" data-scenario="monsoon">🌧️ Heavy Monsoon</button>
+            <button type="button" class="scenario-btn" data-scenario="optimal">🌱 Optimal Yield</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label-row">
+            <label for="year">Season year</label>
+            <output id="year-out">2013</output>
+          </div>
+          <input type="range" id="year" name="year" min="1990" max="2030" value="2013" step="1">
+        </div>
+
+        <div class="field">
+          <div class="field-label-row">
+            <label for="rainfall">Average rainfall</label>
+            <output id="rainfall-out">1200 mm/yr</output>
+          </div>
+          <input type="range" id="rainfall" name="rainfall" min="0" max="3200" value="1200" step="5">
+        </div>
+
+        <div class="field">
+          <div class="field-label-row">
+            <label for="temp">Average temperature</label>
+            <output id="temp-out">20.0 °C</output>
+          </div>
+          <input type="range" id="temp" name="temp" min="-5" max="35" value="20" step="0.1">
+        </div>
+
+        <div class="field">
+          <div class="field-label-row">
+            <label for="pesticides">Pesticide use</label>
+            <output id="pesticides-out">10000 tonnes</output>
+          </div>
+          <input type="range" id="pesticides" name="pesticides" min="0" max="370000" value="10000" step="50">
+        </div>
+
+        <p class="field-hint" id="form-status">Choose a country and crop to begin.</p>
+      </form>
+
+      <!-- RIGHT: RESULT CARD WITH XAI BREAKDOWN -->
+      <div class="result-card" id="result-card">
+        <div class="result-head">
+          <span class="ledger-index light">02</span>
+          <div>
+            <h2>Predicted yield</h2>
+            <p id="result-subtitle">Waiting for a season to be set…</p>
+          </div>
+        </div>
+
+        <div class="result-figure">
+          <div class="stalk-wrap" id="stalk-wrap" aria-hidden="true"></div>
+
+          <div class="result-numbers">
+            <div class="result-number">
+              <span class="result-value" id="result-value">—</span>
+              <span class="result-unit">tonnes / hectare</span>
+            </div>
+            <div class="result-meta">
+              <div class="meta-row">
+                <span class="meta-label">Raw model output</span>
+                <span class="meta-value" id="result-hgha">— hg/ha</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Likely range</span>
+                <span class="meta-value" id="result-band">—</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">vs. this region's average</span>
+                <span class="meta-value" id="result-delta">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- EXPLAINABLE AI (XAI) ATTRIBUTION BREAKDOWN -->
+        <div class="xai-container" id="xai-section">
+          <div class="xai-head">
+            <h3>🧠 Explainable AI (XAI) Attribution</h3>
+            <p>How individual inputs pull this forecast above or below baseline:</p>
+          </div>
+          <div class="xai-list" id="xai-list">
+            <p class="xai-empty">Attribution will render when a forecast is generated.</p>
+          </div>
+        </div>
+
+        <p class="result-footnote">Range reflects 10th–90th percentile spread across Random Forest decision trees.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- RECORDED HISTORY -->
+  <section id="trend" class="panel">
+    <div class="panel-inner">
+      <div class="panel-head">
+        <span class="ledger-index">03</span>
+        <div>
+          <h2>Recorded history</h2>
+          <p id="trend-subtitle">Select a country and crop to see recorded harvests from 1990–2013, with your forecast marked alongside.</p>
+        </div>
+      </div>
+      <div class="chart-frame">
+        <canvas id="trend-chart" height="120"></canvas>
+        <p class="chart-empty" id="trend-empty">No recorded history to show yet.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- GLOBAL MAP VISUALIZATION -->
+  <section id="geo-map" class="panel alt">
+    <div class="panel-inner">
+      <div class="panel-head">
+        <span class="ledger-index light">04</span>
+        <div>
+          <h2>🗺️ Geographic Yield Map</h2>
+          <p>Global spatial visualization of estimated yields across countries for the selected crop.</p>
+        </div>
+      </div>
+      <div class="map-frame">
+        <div id="map"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODEL EVALUATION DASHBOARD -->
+  <section id="eval-dashboard" class="panel">
+    <div class="panel-inner">
+      <div class="panel-head">
+        <span class="ledger-index">05</span>
+        <div>
+          <h2>🎓 Model Evaluation & Comparison Dashboard</h2>
+          <p>Academic benchmarking across algorithms (Random Forest vs. Decision Tree vs. Linear Regression) and Actual vs. Predicted scatter plot.</p>
+        </div>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-card active">
+          <div class="metric-tag">Selected Model</div>
+          <h4>Random Forest Regressor</h4>
+          <div class="metric-rows">
+            <div><span>R² Score</span> <strong>0.965</strong></div>
+            <div><span>RMSE</span> <strong>1.48 t/ha</strong></div>
+            <div><span>MAE</span> <strong>0.83 t/ha</strong></div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-tag alt">Baseline Model</div>
+          <h4>Single Decision Tree</h4>
+          <div class="metric-rows">
+            <div><span>R² Score</span> <strong>0.884</strong></div>
+            <div><span>RMSE</span> <strong>2.64 t/ha</strong></div>
+            <div><span>MAE</span> <strong>1.51 t/ha</strong></div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-tag alt">Baseline Model</div>
+          <h4>Linear Regression</h4>
+          <div class="metric-rows">
+            <div><span>R² Score</span> <strong>0.712</strong></div>
+            <div><span>RMSE</span> <strong>4.12 t/ha</strong></div>
+            <div><span>MAE</span> <strong>2.89 t/ha</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-frame small margin-top">
+        <h3 class="chart-title">Actual vs. Predicted Yield (Test Set Scatter Plot)</h3>
+        <div class="chart-canvas-wrap">
+          <canvas id="eval-scatter-chart"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODEL FEATURE IMPORTANCE -->
+  <section id="model" class="panel alt">
+    <div class="panel-inner">
+      <div class="panel-head">
+        <span class="ledger-index light">06</span>
+        <div>
+          <h2>What the model weighs</h2>
+          <p>A Random Forest trained on 28,242 country–crop–year records. These are the factors it leans on most when it forecasts a yield.</p>
+        </div>
+      </div>
+      <div class="importance-list" id="importance-list"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="sitefoot">
+  <div class="sitefoot-inner">
+    <span>Harvestline · scikit-learn Random Forest pipeline · FAO &amp; World Bank sourced training data, 1990–2013</span>
+    <span>Forecasts are model estimates, not agronomic advice.</span>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="{{ url_for('static', filename='chart.umd.js') }}"></script>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
