@@ -42,11 +42,20 @@ The model was evaluated using 80/20 train-test splits on historical FAO harvest 
 
 The training pipeline constructs three engineered domain interaction features:
 
-$$\text{rain\_temp\_interaction} = \text{average\_rain\_fall\_mm\_per\_year} \times \text{avg\_temp}$$
+- **Rainfall–Temperature Interaction**:
+  $$\text{Rain-Temp Interaction} = \text{Rainfall (mm)} \times \text{Temperature (°C)}$$
 
-$$\text{pesticide\_per\_rainfall} = \frac{\text{pesticides\_tonnes}}{\text{average\_rain\_fall\_mm\_per\_year} + 10^{-5}}$$
+- **Pesticide-to-Rainfall Ratio**:
+  $$\text{Pesticide-Rain Ratio} = \frac{\text{Pesticides (tonnes)}}{\text{Rainfall (mm)} + 10^{-5}}$$
 
-$$\text{years\_since\_start} = \text{Year} - 1990$$
+- **Years Since Base Year**:
+  $$\text{Years Since 1990} = \text{Year} - 1990$$
+
+| Feature Column Name | Formula | Description |
+| :--- | :--- | :--- |
+| `rain_temp_interaction` | $\text{Rainfall} \times \text{Temp}$ | Synergistic climate stress effect on crop growth |
+| `pesticide_per_rainfall` | $\text{Pesticides} / \text{Rainfall}$ | Input intensity relative to precipitation |
+| `years_since_start` | $\text{Year} - 1990$ | Normalized temporal trend index |
 
 ---
 
