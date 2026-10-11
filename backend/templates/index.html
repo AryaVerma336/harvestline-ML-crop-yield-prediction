@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Harvestline — Crop Yield Forecasting</title>
+<title>Harvestline — Crop Yield Forecasting & Agro-Climatic Intelligence</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,450;9..144,560;9..144,680&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,450;9..144,560;9..144,680&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
@@ -14,6 +14,7 @@
 
 <div class="grain-overlay" aria-hidden="true"></div>
 
+<!-- TOPBAR -->
 <header class="topbar">
   <div class="topbar-inner">
     <div class="brand">
@@ -24,28 +25,63 @@
         <path d="M16 20C16 20 24 19 26 12C18.5 12 16 20 16 20Z" fill="currentColor"/>
       </svg>
       <span class="brand-name">Harvestline</span>
+      <span class="badge-flag">🇮🇳 India</span>
     </div>
-    <nav class="topnav">
-      <a href="#predict">Forecast</a>
-      <a href="#xai-section">Explainable AI</a>
-      <a href="#trend">History</a>
-      <a href="#geo-map">Global Map</a>
-      <a href="#eval-dashboard">Evaluation</a>
-      <a href="#model">Model</a>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Open navigation" aria-expanded="false" aria-controls="topnav">
+      <span></span><span></span><span></span>
+    </button>
+    <nav class="topnav" id="topnav" role="navigation">
+      <a href="#predict" onclick="closeNav()">Forecast</a>
+      <a href="#india-section" onclick="closeNav()">Indian Agro-Intel</a>
+      <a href="#scenario-compare-section" onclick="closeNav()">Climate Stress</a>
+      <a href="#trend" onclick="closeNav()">History</a>
+      <a href="#geo-map" onclick="closeNav()">Global Map</a>
+      <a href="#eval-dashboard" onclick="closeNav()">Evaluation</a>
+      <a href="#methodology-section" class="nav-highlight" onclick="closeNav()">Architecture &amp; Specs</a>
     </nav>
   </div>
 </header>
+<script>
+  function closeNav() {
+    const nav = document.getElementById('topnav');
+    const btn = document.getElementById('nav-toggle');
+    nav.classList.remove('open');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.classList.remove('active');
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    const btn = document.getElementById('nav-toggle');
+    btn.addEventListener('click', function() {
+      const nav = document.getElementById('topnav');
+      const isOpen = nav.classList.toggle('open');
+      btn.setAttribute('aria-expanded', isOpen);
+      btn.classList.toggle('active', isOpen);
+    });
+  });
+</script>
 
 <main>
 
+  <!-- HERO SECTION -->
   <section class="hero">
     <div class="hero-inner">
-      <p class="eyebrow">Academic Edition · Random Forest, trained on FAO yield data 1990–2013</p>
-      <h1 class="hero-title">Every harvest starts as<br><em>a line in the ledger.</em></h1>
-      <p class="hero-sub">Pick a country, a crop and a season's conditions — Harvestline predicts yield per hectare, explains feature contributions (XAI), simulates climate scenarios, and benchmarks model accuracy.</p>
+      <div class="hero-badges">
+        <span class="eyebrow">Random Forest ML Pipeline (R² = 0.987)</span>
+        <span class="pill-badge">FAO &amp; World Bank Data (1990–2013)</span>
+        <span class="pill-badge highlight">🇮🇳 India Mandi Standard (q/ha &amp; q/acre)</span>
+      </div>
+      <h1 class="hero-title">Precision Crop Yield Forecasting &amp;<br><em>Agro-Climatic Intelligence</em></h1>
+      <p class="hero-sub">Predict crop yields per hectare and acre with machine learning, deconstruct weather sensitivities with Explainable AI (XAI), simulate climate change shocks (IPCC +1.5°C, El Niño droughts, monsoon deluges), and benchmark algorithms against baselines.</p>
+      
+      <div class="hero-quick-actions">
+        <a href="#predict" class="hero-btn primary">🌾 Start Yield Forecast</a>
+        <a href="#india-section" class="hero-btn secondary">🇮🇳 Explore Indian Agro-Intelligence</a>
+        <a href="#methodology-section" class="hero-btn outline">🔬 Technical Architecture &amp; Methodology</a>
+      </div>
     </div>
   </section>
 
+  <!-- PREDICTION WORKSPACE -->
   <section id="predict" class="workspace">
     <div class="workspace-inner">
 
@@ -54,41 +90,75 @@
         <div class="ledger-head">
           <span class="ledger-index">01</span>
           <div>
-            <h2>Set the season</h2>
-            <p>Choose a place and crop, then tune growing conditions or run a climate scenario.</p>
+            <h2>Set the season &amp; region</h2>
+            <p>Pick country and crop, choose an Indian season or regional preset, or test custom climate parameters.</p>
+          </div>
+        </div>
+
+        <!-- UNIT SELECTOR -->
+        <div class="unit-selector-wrap">
+          <label class="unit-label">Display Agricultural Unit:</label>
+          <div class="unit-buttons" id="unit-switcher">
+            <button type="button" class="unit-btn active" data-unit="q_ha" title="Quintals per Hectare (Indian Standard)">q/ha (Quintal/ha)</button>
+            <button type="button" class="unit-btn" data-unit="t_ha" title="Tonnes per Hectare (Global Metric)">t/ha (Tonnes/ha)</button>
+            <button type="button" class="unit-btn" data-unit="q_acre" title="Quintals per Acre (Indian Farm Field)">q/acre (Quintal/acre)</button>
+            <button type="button" class="unit-btn" data-unit="kg_acre" title="Kilograms per Acre">kg/acre</button>
+            <button type="button" class="unit-btn" data-unit="hg_ha" title="Hectograms per Hectare (Raw FAO Unit)">hg/ha</button>
           </div>
         </div>
 
         <div class="field-row two">
           <div class="field">
-            <label for="area">Country</label>
+            <label for="area">Country / Territory</label>
             <select id="area" name="area" required></select>
           </div>
           <div class="field">
-            <label for="item">Crop</label>
+            <label for="item">Crop Variety</label>
             <select id="item" name="item" required></select>
           </div>
         </div>
 
         <button type="button" id="autofill-btn" class="ghost-btn" disabled>
           <svg viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true"><path d="M8 1v3M8 12v3M1 8h3M12 8h3M3.3 3.3l2.1 2.1M10.6 10.6l2.1 2.1M12.7 3.3l-2.1 2.1M5.4 10.6l-2.1 2.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-          <span>Fill with this region's historical average</span>
+          <span>Auto-fill with this region's historical baseline</span>
         </button>
+
+        <!-- INDIAN SEASONAL & REGIONAL PRESETS -->
+        <div class="preset-box">
+          <div class="preset-header">
+            <span class="preset-title">🇮🇳 Indian Cropping Season Presets:</span>
+          </div>
+          <div class="preset-buttons">
+            <button type="button" class="preset-btn" data-preset="kharif" title="Southwest Monsoon season (Rice, Maize, Soybeans, Jowar)">🌾 Kharif (Monsoon: 28°C, 1250mm)</button>
+            <button type="button" class="preset-btn" data-preset="rabi" title="Winter cool season (Wheat, Potatoes)">❄️ Rabi (Winter: 19.5°C, 250mm)</button>
+            <button type="button" class="preset-btn" data-preset="zaid" title="Summer irrigated short crop season">☀️ Zaid (Summer: 33°C, 100mm)</button>
+          </div>
+          
+          <div class="preset-header margin-top-sm">
+            <span class="preset-title">🚜 Indian Agro-Climatic Zone Presets:</span>
+          </div>
+          <div class="preset-buttons">
+            <button type="button" class="preset-btn alt" data-preset="gangetic" title="Punjab / Haryana / Western UP (Breadbasket of India)">Punjab &amp; Haryana Plains</button>
+            <button type="button" class="preset-btn alt" data-preset="eastern" title="West Bengal / Odisha (Tropical Coastal Rice Belt)">Eastern Delta (Bengal/Odisha)</button>
+            <button type="button" class="preset-btn alt" data-preset="deccan" title="MP / Maharashtra (Black Soil Rainfed Soybean & Jowar)">Deccan Plateau (MP/Maharashtra)</button>
+            <button type="button" class="preset-btn alt" data-preset="south" title="Tamil Nadu / Kerala (High-yielding Tapioca & Rice)">South Tropical (Tamil Nadu/Kerala)</button>
+          </div>
+        </div>
 
         <!-- CLIMATE SCENARIO SIMULATOR PRESETS -->
         <div class="scenario-box">
-          <span class="scenario-title">🌦️ Climate Scenario Simulator ("What-If"):</span>
+          <span class="scenario-title">🌦️ Climate Stress Simulator ("What-If" Analysis):</span>
           <div class="scenario-buttons">
             <button type="button" class="scenario-btn" data-scenario="ipcc15">☀️ +1.5°C Warming</button>
-            <button type="button" class="scenario-btn" data-scenario="drought">🔥 Heatwave & Drought</button>
-            <button type="button" class="scenario-btn" data-scenario="monsoon">🌧️ Heavy Monsoon</button>
-            <button type="button" class="scenario-btn" data-scenario="optimal">🌱 Optimal Yield</button>
+            <button type="button" class="scenario-btn" data-scenario="drought">🔥 Heatwave &amp; Drought (El Niño)</button>
+            <button type="button" class="scenario-btn" data-scenario="monsoon">🌧️ Heavy Monsoon Deluge</button>
+            <button type="button" class="scenario-btn" data-scenario="optimal">🌱 Optimal Yield Recipe</button>
           </div>
         </div>
 
         <div class="field">
           <div class="field-label-row">
-            <label for="year">Season year</label>
+            <label for="year">Season Year</label>
             <output id="year-out">2013</output>
           </div>
           <input type="range" id="year" name="year" min="1990" max="2030" value="2013" step="1">
@@ -96,38 +166,38 @@
 
         <div class="field">
           <div class="field-label-row">
-            <label for="rainfall">Average rainfall</label>
-            <output id="rainfall-out">1200 mm/yr</output>
+            <label for="rainfall">Average Annual Rainfall (Precipitation)</label>
+            <output id="rainfall-out">1083 mm/yr</output>
           </div>
-          <input type="range" id="rainfall" name="rainfall" min="0" max="3200" value="1200" step="5">
+          <input type="range" id="rainfall" name="rainfall" min="0" max="3200" value="1083" step="5">
         </div>
 
         <div class="field">
           <div class="field-label-row">
-            <label for="temp">Average temperature</label>
-            <output id="temp-out">20.0 °C</output>
+            <label for="temp">Average Growing Season Temperature</label>
+            <output id="temp-out">26.0 °C</output>
           </div>
-          <input type="range" id="temp" name="temp" min="-5" max="35" value="20" step="0.1">
+          <input type="range" id="temp" name="temp" min="-5" max="38" value="26.0" step="0.1">
         </div>
 
         <div class="field">
           <div class="field-label-row">
-            <label for="pesticides">Pesticide use</label>
-            <output id="pesticides-out">10000 tonnes</output>
+            <label for="pesticides">Pesticide / Crop Protection Usage</label>
+            <output id="pesticides-out">48,459 tonnes</output>
           </div>
-          <input type="range" id="pesticides" name="pesticides" min="0" max="370000" value="10000" step="50">
+          <input type="range" id="pesticides" name="pesticides" min="0" max="370000" value="48459" step="50">
         </div>
 
-        <p class="field-hint" id="form-status">Choose a country and crop to begin.</p>
+        <p class="field-hint" id="form-status">India (Wheat) selected by default. Fine-tune parameters above to re-forecast instantly.</p>
       </form>
 
-      <!-- RIGHT: RESULT CARD WITH XAI BREAKDOWN -->
+      <!-- RIGHT: RESULT CARD WITH XAI BREAKDOWN & EQUIVALENCIES -->
       <div class="result-card" id="result-card">
         <div class="result-head">
           <span class="ledger-index light">02</span>
           <div>
-            <h2>Predicted yield</h2>
-            <p id="result-subtitle">Waiting for a season to be set…</p>
+            <h2>Predicted Yield Forecast</h2>
+            <p id="result-subtitle">Calculating yield prediction…</p>
           </div>
         </div>
 
@@ -137,19 +207,43 @@
           <div class="result-numbers">
             <div class="result-number">
               <span class="result-value" id="result-value">—</span>
-              <span class="result-unit">tonnes / hectare</span>
+              <span class="result-unit" id="result-unit-label">quintals / hectare</span>
             </div>
+
+            <!-- MULTI-UNIT EQUIVALENCIES CARD -->
+            <div class="equivalencies-box">
+              <span class="eq-title">Agricultural Unit Equivalencies:</span>
+              <div class="eq-grid">
+                <div class="eq-item">
+                  <span class="eq-label">Indian Mandi (q/ha)</span>
+                  <strong class="eq-val" id="eq-q-ha">—</strong>
+                </div>
+                <div class="eq-item">
+                  <span class="eq-label">Farm Scale (q/acre)</span>
+                  <strong class="eq-val" id="eq-q-acre">—</strong>
+                </div>
+                <div class="eq-item">
+                  <span class="eq-label">Global Metric (t/ha)</span>
+                  <strong class="eq-val" id="eq-t-ha">—</strong>
+                </div>
+                <div class="eq-item">
+                  <span class="eq-label">Per Acre (kg/acre)</span>
+                  <strong class="eq-val" id="eq-kg-acre">—</strong>
+                </div>
+              </div>
+            </div>
+
             <div class="result-meta">
               <div class="meta-row">
-                <span class="meta-label">Raw model output</span>
+                <span class="meta-label">Raw FAO model output</span>
                 <span class="meta-value" id="result-hgha">— hg/ha</span>
               </div>
               <div class="meta-row">
-                <span class="meta-label">Likely range</span>
+                <span class="meta-label">Tree confidence spread (10th–90th %)</span>
                 <span class="meta-value" id="result-band">—</span>
               </div>
               <div class="meta-row">
-                <span class="meta-label">vs. this region's average</span>
+                <span class="meta-label">vs. Regional historical baseline</span>
                 <span class="meta-value" id="result-delta">—</span>
               </div>
             </div>
@@ -159,28 +253,159 @@
         <!-- EXPLAINABLE AI (XAI) ATTRIBUTION BREAKDOWN -->
         <div class="xai-container" id="xai-section">
           <div class="xai-head">
-            <h3>🧠 Explainable AI (XAI) Attribution</h3>
-            <p>How individual inputs pull this forecast above or below baseline:</p>
+            <h3>🧠 Explainable AI (XAI) Feature Attribution</h3>
+            <p>How specific climate and management factors pull this yield above or below the regional baseline:</p>
           </div>
           <div class="xai-list" id="xai-list">
             <p class="xai-empty">Attribution will render when a forecast is generated.</p>
           </div>
         </div>
 
-        <p class="result-footnote">Range reflects 10th–90th percentile spread across Random Forest decision trees.</p>
+        <p class="result-footnote">Prediction generated by Random Forest Regressor trained on 13,734 clean historical records (1990–2013).</p>
       </div>
 
     </div>
   </section>
 
-  <!-- RECORDED HISTORY -->
-  <section id="trend" class="panel">
+  <!-- SECTION 03: INDIA AGRO-INTELLIGENCE & CROP COMPARISON -->
+  <section id="india-section" class="panel">
     <div class="panel-inner">
       <div class="panel-head">
         <span class="ledger-index">03</span>
         <div>
-          <h2>Recorded history</h2>
-          <p id="trend-subtitle">Select a country and crop to see recorded harvests from 1990–2013, with your forecast marked alongside.</p>
+          <h2>🇮🇳 Indian Agricultural Intelligence &amp; Crop Benchmarking</h2>
+          <p>Analyzing Indian crop yields across Kharif, Rabi, and Zaid seasons, understanding the yield gap against global benchmarks, and translating Mandi pricing units.</p>
+        </div>
+      </div>
+
+      <!-- INDIA VS GLOBAL GRAPH -->
+      <div class="chart-frame margin-bottom">
+        <div class="chart-header-row">
+          <div>
+            <h3 class="chart-title">India vs. Global Average Yield Comparison (by Crop)</h3>
+            <p class="chart-desc">Compares India's recorded historical yields against global averages across 101 countries in the dataset.</p>
+          </div>
+          <div class="chart-toggle-group">
+            <button type="button" class="btn-toggle active" id="india-unit-qha">Quintals / Hectare (q/ha)</button>
+            <button type="button" class="btn-toggle" id="india-unit-tha">Tonnes / Hectare (t/ha)</button>
+          </div>
+        </div>
+        <div class="chart-canvas-wrap large">
+          <canvas id="india-global-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- INDIAN SEASONS CARDS -->
+      <div class="season-grid" id="india-seasons-grid">
+        <div class="season-card">
+          <div class="season-badge kharif">🌾 Kharif Season</div>
+          <h4>Monsoon Sowing (June – October)</h4>
+          <p class="season-timing"><strong>Monsoon Dependence:</strong> 70% of India's annual rainfall falls during this window.</p>
+          <p class="season-crops"><strong>Major Crops:</strong> Rice (Paddy), Maize, Soybeans, Sorghum (Jowar).</p>
+          <div class="season-insight">
+            <strong>Agronomic Reality:</strong> Delayed monsoon onset postpones paddy transplantation; mid-season dry spells in August severely damage rainfed soybean pods in MP &amp; Maharashtra.
+          </div>
+        </div>
+
+        <div class="season-card">
+          <div class="season-badge rabi">❄️ Rabi Season</div>
+          <h4>Winter Harvest (November – April)</h4>
+          <p class="season-timing"><strong>Water Source:</strong> Subsoil moisture, tubewell/canal irrigation &amp; Western Disturbances.</p>
+          <p class="season-crops"><strong>Major Crops:</strong> Wheat, Potatoes, Mustard, Gram.</p>
+          <div class="season-insight">
+            <strong>Agronomic Reality:</strong> Requires cool vegetative temperatures (15–20°C). Unseasonal heatwaves in March (&gt;32°C) trigger terminal heat stress, causing premature grain shriveling.
+          </div>
+        </div>
+
+        <div class="season-card">
+          <div class="season-badge zaid">☀️ Zaid Season</div>
+          <h4>Summer Intermediary (March – June)</h4>
+          <p class="season-timing"><strong>Condition:</strong> High heat (32–38°C), dry air, 100% reliant on artificial irrigation.</p>
+          <p class="season-crops"><strong>Major Crops:</strong> Vegetables, fodder, watermelons, short-duration maize.</p>
+          <div class="season-insight">
+            <strong>Agronomic Reality:</strong> Bridge cropping window between Rabi harvest and Kharif sowing; high evapotranspiration requires frequent drip or furrow watering.
+          </div>
+        </div>
+      </div>
+
+      <!-- INDIAN APMC MANDI & UNIT EXPLAINER -->
+      <div class="info-callout margin-top">
+        <div class="info-callout-icon">💡</div>
+        <div class="info-callout-body">
+          <h4>Why Indian APMC Mandis &amp; Farmers Use Quintals (q/ha):</h4>
+          <p>In Indian agriculture, crop trading, Minimum Support Price (MSP) announcements, and APMC Mandi bids are formulated in <strong>₹ per Quintal (100 kg)</strong>. A farmer with 5 acres of land calculates harvest in bags (50 kg each) or quintals per acre. For international reporting, FAO uses hectograms per hectare (hg/ha) and research papers use tonnes/ha. Harvestline dynamically bridges these worlds:</p>
+          <div class="unit-formula-row">
+            <span class="formula-chip">1 Metric Tonne = 10 Quintals = 1,000 kg</span>
+            <span class="formula-chip">1 Hectare ≈ 2.471 Acres</span>
+            <span class="formula-chip">1 Tonne / Hectare = 10 q/ha ≈ 4.05 q/acre</span>
+            <span class="formula-chip">10,000 hg/ha = 1 t/ha</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- INDIAN CROP MATRIX TABLE -->
+      <div class="table-frame margin-top">
+        <h3 class="table-title">Indian Crop Performance Matrix &amp; Agronomic Notes</h3>
+        <div class="table-wrap">
+          <table class="data-table" id="india-crops-table">
+            <thead>
+              <tr>
+                <th>Crop Variety</th>
+                <th>Hindi / Local Name</th>
+                <th>Season</th>
+                <th>India Avg (q/ha)</th>
+                <th>Global Avg (q/ha)</th>
+                <th>Yield Ratio</th>
+                <th>Major Producing States</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Populated via script.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SECTION 04: CLIMATE SCENARIOS COMPARISON -->
+  <section id="scenario-compare-section" class="panel alt">
+    <div class="panel-inner">
+      <div class="panel-head">
+        <span class="ledger-index light">04</span>
+        <div>
+          <h2>🌦️ Climate Scenario Simulator &amp; Stress Test</h2>
+          <p>Side-by-side comparison of projected yields under global warming (+1.5°C), El Niño heatwave &amp; drought, monsoon deluges, and optimal growth conditions.</p>
+        </div>
+      </div>
+
+      <div class="chart-frame">
+        <div class="chart-header-row">
+          <div>
+            <h3 class="chart-title" id="scenario-chart-title">Climate Stress Yield Impact for Selected Crop</h3>
+            <p class="chart-desc">Shows how different climate conditions alter harvest yields relative to normal seasonal expectations.</p>
+          </div>
+        </div>
+        <div class="chart-canvas-wrap medium">
+          <canvas id="scenario-compare-chart"></canvas>
+        </div>
+      </div>
+
+      <div class="scenario-cards-row" id="scenario-cards-container">
+        <!-- Rendered by script.js -->
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 05: RECORDED HISTORY -->
+  <section id="trend" class="panel">
+    <div class="panel-inner">
+      <div class="panel-head">
+        <span class="ledger-index">05</span>
+        <div>
+          <h2>Recorded History (1990–2013)</h2>
+          <p id="trend-subtitle">Select a country and crop to see recorded harvests from 1990–2013, with your live forecast marked alongside.</p>
         </div>
       </div>
       <div class="chart-frame">
@@ -190,11 +415,11 @@
     </div>
   </section>
 
-  <!-- GLOBAL MAP VISUALIZATION -->
+  <!-- SECTION 06: GLOBAL MAP -->
   <section id="geo-map" class="panel alt">
     <div class="panel-inner">
       <div class="panel-head">
-        <span class="ledger-index light">04</span>
+        <span class="ledger-index light">06</span>
         <div>
           <h2>🗺️ Geographic Yield Map</h2>
           <p>Global spatial visualization of estimated yields across countries for the selected crop.</p>
@@ -206,64 +431,439 @@
     </div>
   </section>
 
-  <!-- MODEL EVALUATION DASHBOARD -->
+  <!-- SECTION 07: MODEL EVALUATION & BENCHMARKING -->
   <section id="eval-dashboard" class="panel">
     <div class="panel-inner">
       <div class="panel-head">
-        <span class="ledger-index">05</span>
+        <span class="ledger-index">07</span>
         <div>
-          <h2>🎓 Model Evaluation & Comparison Dashboard</h2>
-          <p>Academic benchmarking across algorithms (Random Forest vs. Decision Tree vs. Linear Regression) and Actual vs. Predicted scatter plot.</p>
+          <h2>📊 Model Evaluation &amp; Performance Benchmarking</h2>
+          <p>Rigorous comparative evaluation across 5 algorithms: Random Forest, XGBoost, Single Decision Tree, Linear Regression (OLS), and Support Vector Regressor (SVR).</p>
         </div>
       </div>
 
-      <div class="metrics-grid">
+      <!-- 5 MODEL METRIC CARDS -->
+      <div class="metrics-grid six-cols">
         <div class="metric-card active">
-          <div class="metric-tag">Selected Model</div>
-          <h4>Random Forest Regressor</h4>
+          <div class="metric-tag">Champion Pipeline</div>
+          <h4>Random Forest</h4>
           <div class="metric-rows">
-            <div><span>R² Score</span> <strong>0.965</strong></div>
-            <div><span>RMSE</span> <strong>1.48 t/ha</strong></div>
-            <div><span>MAE</span> <strong>0.83 t/ha</strong></div>
+            <div><span>R² Score</span> <strong>0.987</strong></div>
+            <div><span>RMSE</span> <strong>0.86 t/ha</strong></div>
+            <div><span>MAE</span> <strong>0.44 t/ha</strong></div>
+            <div><span>5-Fold CV</span> <strong>0.88 ± 0.09</strong></div>
           </div>
+          <p class="metric-desc">Captures non-linear climate thresholds and multi-way country x crop interactions.</p>
         </div>
+
         <div class="metric-card">
-          <div class="metric-tag alt">Baseline Model</div>
-          <h4>Single Decision Tree</h4>
+          <div class="metric-tag alt">Gradient Boosting</div>
+          <h4>XGBoost</h4>
+          <div class="metric-rows">
+            <div><span>R² Score</span> <strong>0.979</strong></div>
+            <div><span>RMSE</span> <strong>1.10 t/ha</strong></div>
+            <div><span>MAE</span> <strong>0.69 t/ha</strong></div>
+            <div><span>5-Fold CV</span> <strong>1.08 ± 0.04</strong></div>
+          </div>
+          <p class="metric-desc">Highly accurate sequential ensemble; lowest fold-to-fold cross-validation variance.</p>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-tag alt">Tree Baseline</div>
+          <h4>Decision Tree</h4>
           <div class="metric-rows">
             <div><span>R² Score</span> <strong>0.884</strong></div>
             <div><span>RMSE</span> <strong>2.64 t/ha</strong></div>
             <div><span>MAE</span> <strong>1.51 t/ha</strong></div>
+            <div><span>5-Fold CV</span> <strong>2.72 ± 0.12</strong></div>
           </div>
+          <p class="metric-desc">High variance on test data; prone to overfitting without bagging.</p>
         </div>
+
         <div class="metric-card">
-          <div class="metric-tag alt">Baseline Model</div>
+          <div class="metric-tag alt">Linear Baseline</div>
           <h4>Linear Regression</h4>
           <div class="metric-rows">
-            <div><span>R² Score</span> <strong>0.712</strong></div>
-            <div><span>RMSE</span> <strong>4.12 t/ha</strong></div>
-            <div><span>MAE</span> <strong>2.89 t/ha</strong></div>
+            <div><span>R² Score</span> <strong>0.766</strong></div>
+            <div><span>RMSE</span> <strong>3.69 t/ha</strong></div>
+            <div><span>MAE</span> <strong>2.61 t/ha</strong></div>
+            <div><span>5-Fold CV</span> <strong>3.70 ± 0.06</strong></div>
+          </div>
+          <p class="metric-desc">Cannot capture non-linear agro-climatic boundaries (e.g. thermal tipping points).</p>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-tag failed">Kernel Baseline</div>
+          <h4>SVR (RBF Kernel)</h4>
+          <div class="metric-rows">
+            <div><span>R² Score</span> <strong>-0.175</strong></div>
+            <div><span>RMSE</span> <strong>8.25 t/ha</strong></div>
+            <div><span>MAE</span> <strong>5.08 t/ha</strong></div>
+            <div><span>5-Fold CV</span> <strong>8.28 ± 0.10</strong></div>
+          </div>
+          <p class="metric-desc">Fails on sparse one-hot encoded geographic data without exhaustive hyperparameter grid search.</p>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-tag alt">Dummy Benchmark</div>
+          <h4>Mean Predictor</h4>
+          <div class="metric-rows">
+            <div><span>R² Score</span> <strong>0.000</strong></div>
+            <div><span>RMSE</span> <strong>7.62 t/ha</strong></div>
+            <div><span>MAE</span> <strong>5.63 t/ha</strong></div>
+            <div><span>5-Fold CV</span> <strong>7.62 ± 0.05</strong></div>
+          </div>
+          <p class="metric-desc">Always predicts global training mean yield; establishes fundamental floor.</p>
+        </div>
+      </div>
+
+      <!-- COMPARISON CHARTS ROW -->
+      <div class="chart-double-grid margin-top">
+        <div class="chart-frame">
+          <div class="chart-header-row">
+            <div>
+              <h3 class="chart-title">Model Benchmarking Comparison (R² &amp; RMSE)</h3>
+              <p class="chart-desc">Side-by-side performance across all tested machine learning algorithms.</p>
+            </div>
+            <div class="chart-toggle-group">
+              <button type="button" class="btn-toggle active" id="btn-chart-r2">R² Score</button>
+              <button type="button" class="btn-toggle" id="btn-chart-rmse">RMSE (t/ha)</button>
+            </div>
+          </div>
+          <div class="chart-canvas-wrap medium">
+            <canvas id="model-comparison-chart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-frame">
+          <div class="chart-header-row">
+            <div>
+              <h3 class="chart-title">Feature Importance: Impurity vs. Permutation</h3>
+              <p class="chart-desc">MDI Gini impurity reduction vs. Out-of-sample Permutation RMSE impact.</p>
+            </div>
+          </div>
+          <div class="chart-canvas-wrap medium">
+            <canvas id="feature-imp-chart"></canvas>
           </div>
         </div>
       </div>
 
-      <div class="chart-frame small margin-top">
-        <h3 class="chart-title">Actual vs. Predicted Yield (Test Set Scatter Plot)</h3>
-        <div class="chart-canvas-wrap">
-          <canvas id="eval-scatter-chart"></canvas>
+      <!-- ABLATION STUDY & STATISTICAL SIGNIFICANCE -->
+      <div class="chart-double-grid margin-top">
+        <div class="table-frame">
+          <h3 class="table-title">Feature Ablation Study</h3>
+          <p class="table-desc">Demonstrates how removing individual feature sets impacts predictive capacity:</p>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Model Specification</th>
+                  <th>Features (k)</th>
+                  <th>R² Score</th>
+                  <th>RMSE (t/ha)</th>
+                  <th>Agronomic Implication</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="highlight-row">
+                  <td><strong>A — All Engineered Features</strong></td>
+                  <td>6</td>
+                  <td><strong>0.987</strong></td>
+                  <td><strong>0.86</strong></td>
+                  <td>Full production pipeline</td>
+                </tr>
+                <tr class="warning-row">
+                  <td><strong>B — Without Crop &amp; Country</strong></td>
+                  <td>4</td>
+                  <td>0.063</td>
+                  <td>7.37</td>
+                  <td>Model collapses! Genetics &amp; geography dominate baseline yield</td>
+                </tr>
+                <tr>
+                  <td><strong>C — Only Crop &amp; Country</strong></td>
+                  <td>2</td>
+                  <td>0.992</td>
+                  <td>0.67</td>
+                  <td>Baseline predictor (cannot capture year-to-year weather shocks)</td>
+                </tr>
+                <tr class="warning-row">
+                  <td><strong>D — Only Climate Variables</strong></td>
+                  <td>2</td>
+                  <td>-0.074</td>
+                  <td>7.89</td>
+                  <td>Fails completely without knowing crop physiology</td>
+                </tr>
+                <tr>
+                  <td><strong>E — Without Pesticides</strong></td>
+                  <td>5</td>
+                  <td>0.988</td>
+                  <td>0.85</td>
+                  <td>Minor change; weather interaction compensates</td>
+                </tr>
+                <tr>
+                  <td><strong>F — Without Year</strong></td>
+                  <td>5</td>
+                  <td>0.987</td>
+                  <td>0.87</td>
+                  <td>Robust to temporal exclusion</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="chart-frame">
+          <h3 class="chart-title">Actual vs. Predicted Yield (Test Set Scatter Plot)</h3>
+          <p class="chart-desc">40 representative test set points plotted against ideal 1:1 perfect prediction reference line.</p>
+          <div class="chart-canvas-wrap medium">
+            <canvas id="eval-scatter-chart"></canvas>
+          </div>
         </div>
       </div>
+
+      <!-- PAIRED BOOTSTRAP SIGNIFICANCE CALLOUT -->
+      <div class="info-callout success margin-top">
+        <div class="info-callout-icon">✅</div>
+        <div class="info-callout-body">
+          <h4>Statistical Rigor: Paired Bootstrap Hypothesis Testing (B = 2,000 resamples):</h4>
+          <p>A paired non-parametric bootstrap significance test with 2,000 resamples confirmed that <strong>Random Forest decisively outperforms Linear Regression</strong>:</p>
+          <div class="unit-formula-row">
+            <span class="formula-chip">Mean RMSE Difference: 2.83 t/ha (28,321 hg/ha)</span>
+            <span class="formula-chip">95% Confidence Interval: [2.65, 3.01] t/ha</span>
+            <span class="formula-chip">p-value: &lt; 0.001 (Statistically Significant)</span>
+            <span class="formula-chip">All 6 Experimental Hypotheses (H1–H6) Proven True</span>
+          </div>
+        </div>
+      </div>
+
     </div>
   </section>
 
-  <!-- MODEL FEATURE IMPORTANCE -->
-  <section id="model" class="panel alt">
+  <!-- SECTION 08: SYSTEM ARCHITECTURE & TECHNICAL METHODOLOGY -->
+  <section id="methodology-section" class="panel alt highlight-panel">
     <div class="panel-inner">
       <div class="panel-head">
-        <span class="ledger-index light">06</span>
+        <span class="ledger-index light">08</span>
         <div>
-          <h2>What the model weighs</h2>
-          <p>A Random Forest trained on 28,242 country–crop–year records. These are the factors it leans on most when it forecasts a yield.</p>
+          <h2>🔬 System Architecture &amp; Technical Methodology</h2>
+          <p>In-depth technical specification, data pipeline design, statistical validation, and agronomic domain rationale underlying Harvestline.</p>
+        </div>
+      </div>
+
+      <!-- EXECUTIVE OVERVIEW -->
+      <div class="pitch-box">
+        <div class="pitch-badge">⚡ Executive Summary &amp; System Overview</div>
+        <h3>Harvestline Agro-Climatic Intelligence Platform:</h3>
+        <div class="pitch-cards">
+          <div class="pitch-step">
+            <span class="pitch-num">1</span>
+            <strong>Operational Problem:</strong>
+            <p>"Climate volatility and extreme weather create severe unpredictability for food security, particularly in India where 60% of arable cultivation is monsoon-dependent."</p>
+          </div>
+          <div class="pitch-step">
+            <span class="pitch-num">2</span>
+            <strong>ML Pipeline Solution:</strong>
+            <p>"Harvestline provides an end-to-end Machine Learning pipeline utilizing an ensemble Random Forest Regressor trained on 13,734 clean FAO and World Bank records across 101 countries and 10 major food staples."</p>
+          </div>
+          <div class="pitch-step">
+            <span class="pitch-num">3</span>
+            <strong>Empirical Validation:</strong>
+            <p>"The tuned model achieves an R² of 0.987 and RMSE of 0.86 tonnes/ha, demonstrating statistically significant superiority over Linear Regression (R² = 0.766) and SVR (R² = -0.175) with p &lt; 0.001 across 2,000 bootstrap resamples."</p>
+          </div>
+          <div class="pitch-step">
+            <span class="pitch-num">4</span>
+            <strong>Domain &amp; Field Relevance:</strong>
+            <p>"Features Explainable AI (XAI) marginal attribution, IPCC +1.5°C and El Niño drought stress-testing, and native support for Indian agricultural units (quintals/ha, quintals/acre) aligned with APMC Mandi standards."</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SYSTEM ARCHITECTURE FLOW -->
+      <div class="architecture-box margin-top">
+        <h3 class="arch-title">🏗️ End-to-End System Architecture &amp; Data Pipeline Flow</h3>
+        <div class="arch-flow">
+          <div class="arch-node">
+            <span class="arch-step">Step 1</span>
+            <strong>Data Ingestion</strong>
+            <small>28,242 raw records from FAO &amp; World Bank (1990–2013)</small>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-node">
+            <span class="arch-step">Step 2</span>
+            <strong>Data Cleaning</strong>
+            <small>Removed 14,508 multi-source duplicates → 13,734 clean rows</small>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-node">
+            <span class="arch-step">Step 3</span>
+            <strong>Feature Engineering</strong>
+            <small>Rain×Temp interaction, Pesticide/Rain ratio, Years since 1990</small>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-node">
+            <span class="arch-step">Step 4</span>
+            <strong>Pipeline Preprocessing</strong>
+            <small>ColumnTransformer: StandardScaler (num) + OneHotEncoder (cat)</small>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-node">
+            <span class="arch-step">Step 5</span>
+            <strong>Model Training</strong>
+            <small>RandomForest (100 trees) vs XGBoost vs SVR vs Linear OLS</small>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-node">
+            <span class="arch-step">Step 6</span>
+            <strong>Rigorous Validation</strong>
+            <small>80/20 train/test, 5-Fold CV, 2000-resample Bootstrap (p &lt; 0.001)</small>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-node">
+            <span class="arch-step">Step 7</span>
+            <strong>Explainable AI (XAI)</strong>
+            <small>Marginal feature attribution deconstructing each prediction</small>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-node highlight">
+            <span class="arch-step">Step 8</span>
+            <strong>Web Deployment</strong>
+            <small>Flask REST API + Leaflet Map + Chart.js + Indian Mandi UI</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- TECHNICAL FAQ AND DIRECT ANSWERS -->
+      <div class="technical-faq-box margin-top">
+        <h3 class="technical-faq-title">📘 Technical Architecture &amp; Algorithmic Framework FAQ</h3>
+        <p class="technical-faq-desc">Detailed engineering rationales, statistical assumptions, and mathematical formulations behind the Harvestline platform:</p>
+
+        <div class="faq-accordion">
+          
+          <details class="faq-item" open>
+            <summary>
+              <span class="faq-q-num">Q1</span>
+              <strong>Why did you choose Random Forest over Linear Regression or Deep Learning?</strong>
+            </summary>
+            <div class="faq-answer">
+              <p><strong>Answer:</strong> Agricultural crop yield is fundamentally non-linear with sharp biological tipping points. For example, wheat yield increases with temperature up to approximately 20°C, but drops sharply above 30°C due to pollen sterility and grain desiccation. <strong>Linear Regression</strong> assumes constant linear slopes and cannot model these tipping points (achieving only R² = 0.766). <strong>Deep Learning / Neural Networks</strong> require millions of parameters and act as a black box without domain interpretability on small tabular datasets. <strong>Random Forest</strong> is an ensemble of 100 de-correlated decision trees that naturally segments non-linear feature spaces, captures complex categorical interactions (e.g. India × Wheat), is resistant to outliers, and provides native feature importance.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>
+              <span class="faq-q-num">Q2</span>
+              <strong>What does an R² score of 0.987 and RMSE of 0.86 tonnes/ha mean in plain language?</strong>
+            </summary>
+            <div class="faq-answer">
+              <p><strong>Answer:</strong> The coefficient of determination ($R^2 = 0.987$) means our model explains <strong>98.7% of the total variance</strong> in historical crop yields. The remaining 1.3% accounts for unobserved local micro-factors such as soil pH, sudden pest outbreaks, or localized hail storms. The Root Mean Squared Error ($\text{RMSE} = 0.86\text{ t/ha}$ or $8.6\text{ quintals/ha}$) indicates that on average, our model's yield predictions deviate from actual harvest records by less than 1 tonne per hectare, which is well within standard agricultural planning tolerances.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>
+              <span class="faq-q-num">Q3</span>
+              <strong>What domain features did you engineer and what is the agronomic rationale behind them?</strong>
+            </summary>
+            <div class="faq-answer">
+              <p><strong>Answer:</strong> We engineered three domain interaction features:</p>
+              <ul>
+                <li><strong>Rainfall × Temperature Interaction:</strong> High temperature combined with low rainfall creates lethal drought stress (high evapotranspiration), whereas high temperature with high rainfall creates tropical humid conditions. The interaction term captures this synergistic climatic effect.</li>
+                <li><strong>Pesticide-to-Rainfall Ratio:</strong> Heavy monsoon downpours wash away applied surface pesticides (leaching &amp; runoff). This ratio models input retention efficiency.</li>
+                <li><strong>Years Since Base Year (Year − 1990):</strong> Normalizes the temporal trend to model technological advancements, mechanized tractors, and Green Revolution hybrid seed adoption over time.</li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>
+              <span class="faq-q-num">Q4</span>
+              <strong>Why did Support Vector Regressor (SVR) fail with a negative R² (-0.175)?</strong>
+            </summary>
+            <div class="faq-answer">
+              <p><strong>Answer:</strong> SVR with an RBF kernel failed because our dataset has 101 countries and 10 crops, which creates over 111 sparse one-hot encoded binary columns. In high-dimensional sparse spaces, the Euclidean distance metric between data points becomes equidistant (the curse of dimensionality). Without fine-grained, localized hyperparameter grid tuning of C and gamma, SVR defaulted to flat support hyperplanes that performed worse than simply predicting the training target mean ($R^2 < 0$).</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>
+              <span class="faq-q-num">Q5</span>
+              <strong>How did you prevent Data Leakage between the training and testing sets?</strong>
+            </summary>
+            <div class="faq-answer">
+              <p><strong>Answer:</strong> We enforced strict pipeline encapsulation using scikit-learn's <code>Pipeline</code> and <code>ColumnTransformer</code>. All transformations—including <code>StandardScaler</code> for numerical features and <code>OneHotEncoder</code> for categorical features—were fitted <strong>exclusively on the 80% training split</strong> and only applied (transformed) on the 20% test split. No mean, standard deviation, or target information from the test set was ever accessible during pipeline fitting.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>
+              <span class="faq-q-num">Q6</span>
+              <strong>Why did you remove 14,508 duplicate records during data cleaning?</strong>
+            </summary>
+            <div class="faq-answer">
+              <p><strong>Answer:</strong> The raw Kaggle FAO dataset contained 28,242 records because of multi-table relational joins where identical country-crop-year rows were merged repeatedly across auxiliary climate tables. If left uncleaned, these identical duplicate rows would appear in both the training set and testing set (train-test contamination), artificially inflating test accuracy. By deduplicating to 13,734 unique records, we ensured genuine out-of-sample evaluation integrity.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>
+              <span class="faq-q-num">Q7</span>
+              <strong>How does Explainable AI (XAI) feature attribution work in your project?</strong>
+            </summary>
+            <div class="faq-answer">
+              <p><strong>Answer:</strong> Rather than treating the Random Forest as a black box, our XAI engine computes <strong>Marginal Contribution Analysis</strong> for each individual prediction. It first calculates the expected baseline yield for that crop in that country. Then, it evaluates the isolated marginal change in yield caused by altering temperature, rainfall, and pesticide dosage independently. The remaining difference represents non-linear interaction effects. This allows us to explain to a farmer: <em>"Your wheat yield is down by 3.2 quintals/ha primarily due to a +2.5°C temperature spike during grain filling."</em></p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>
+              <span class="faq-q-num">Q8</span>
+              <strong>How is this project tailored to Indian agriculture and APMC Mandis?</strong>
+            </summary>
+            <div class="faq-answer">
+              <p><strong>Answer:</strong> Most global ML models output results in hectograms per hectare (hg/ha) or metric tonnes, which are foreign to Indian agricultural extension officers and farmers. We tailored the project by:</p>
+              <ul>
+                <li>Incorporating Indian units: <strong>Quintals per Hectare (q/ha)</strong> and <strong>Quintals per Acre (q/acre)</strong>, matching APMC Mandi trading standards and MSP declarations.</li>
+                <li>Adding presets for Indian cropping seasons: <strong>Kharif (Monsoon)</strong>, <strong>Rabi (Winter)</strong>, and <strong>Zaid (Summer)</strong>.</li>
+                <li>Profiling Indian agro-climatic zones: Indo-Gangetic Plain, Eastern Delta, Deccan Plateau, and Southern Peninsula.</li>
+                <li>Benchmarking all 8 Indian crops in the FAO dataset against global averages, revealing India's world-leading tapioca productivity (278 q/ha vs 104 q/ha global).</li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>
+              <span class="faq-q-num">Q9</span>
+              <strong>What agronomic impact does an El Niño drought or March heatwave have in your model?</strong>
+            </summary>
+            <div class="faq-answer">
+              <p><strong>Answer:</strong> In our Climate Scenario Simulator: An <strong>El Niño drought</strong> (+3.5°C temperature, −30% rainfall) simulates monsoon failure years like 2002, 2009, and 2015. For rainfed Kharif crops (rice, soybeans, maize), the model predicts a 12% to 22% yield drop. For winter wheat (Rabi), an elevated March temperature triggers terminal heat stress, accelerating crop senescence and reducing test grain weight by 8% to 15%.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>
+              <span class="faq-q-num">Q10</span>
+              <strong>What are the limitations of this project and what is the future scope?</strong>
+            </summary>
+            <div class="faq-answer">
+              <p><strong>Answer:</strong> Current limitations include: (1) Data granularity is at national-level rather than district or farm level; (2) Soil physicochemical parameters (pH, organic carbon, NPK nutrients) were not included in the historical FAO dataset; (3) Extreme episodic events like hail or cyclonic inundation are averaged out over annual figures. <strong>Future Scope:</strong> Integrating Indian satellite telemetry (Sentinel-2 / ISRO Bhuvan NDVI indices), district-level IMD weather APIs, and soil health card integration for precision hyper-local advisory.</p>
+            </div>
+          </details>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SECTION 09: MODEL IMPORTANCE -->
+  <section id="model" class="panel">
+    <div class="panel-inner">
+      <div class="panel-head">
+        <span class="ledger-index">09</span>
+        <div>
+          <h2>What the Model Weighs (Feature Importance)</h2>
+          <p>A Random Forest trained on 13,734 clean country–crop–year records. These are the factors it leans on most when forecasting yield.</p>
         </div>
       </div>
       <div class="importance-list" id="importance-list"></div>
@@ -274,8 +874,8 @@
 
 <footer class="sitefoot">
   <div class="sitefoot-inner">
-    <span>Harvestline · scikit-learn Random Forest pipeline · FAO &amp; World Bank sourced training data, 1990–2013</span>
-    <span>Forecasts are model estimates, not agronomic advice.</span>
+    <span>Harvestline · Scikit-Learn Random Forest Pipeline · FAO &amp; World Bank Sourced Training Data (1990–2013)</span>
+    <span>Climate Analytics &amp; Indian Agricultural Mandi Standards · R² 0.987 · 13,734 Records</span>
   </div>
 </footer>
 

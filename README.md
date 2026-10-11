@@ -1,40 +1,77 @@
-# 🌾 Harvestline — Machine Learning Crop Yield Prediction & Climate Analytics
+# 🌾 Harvestline — Machine Learning Crop Yield Prediction & Agro-Climatic Intelligence
+## *Academic Defense Edition · India-Centric Mandi Units & Global Agricultural Analytics*
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-1.6.1-orange.svg)](https://scikit-learn.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.0.3-green.svg)](https://flask.palletsprojects.com/)
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/)
+[![R2 Score](https://img.shields.io/badge/R%C2%B2%20Score-0.987-brightgreen.svg)](https://scikit-learn.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > **"Every harvest starts as a line in the ledger."**
 
-Harvestline is an end-to-end Machine Learning web application and analytical suite for predicting global agricultural crop yields per hectare (`hg/ha` and `tonnes/ha`). Powered by a trained **Random Forest Regressor** pipeline (`ColumnTransformer` + `RandomForestRegressor`) trained on 28,000+ FAO & World Bank historical records across 100+ countries and major crop varieties.
+Harvestline is an end-to-end Machine Learning web application, climate risk simulator, and agro-climatic intelligence platform for forecasting agricultural crop yields per hectare and per acre. Powered by a production **Random Forest Regressor pipeline** (`ColumnTransformer` + `StandardScaler` + `OneHotEncoder` + `RandomForestRegressor`) trained on **13,734 clean, deduplicated historical records** from the **UN Food and Agriculture Organization (FAO)** and **The World Bank** across 101 countries and 10 major crop varieties (1990–2013).
 
 ---
 
-## ✨ Key Features
+## 🌟 Key Highlights & Academic Innovations
 
-- 🧠 **Explainable AI (XAI) Feature Attribution**: Deconstructs every individual prediction to show how specific inputs (Temperature, Rainfall, Pesticide use, Climate interactions) pull the forecast above or below regional historical baselines.
-- 🌦️ **Climate Scenario Simulator ("What-If" Analysis)**: Instant presets for climate change stress testing:
-  - ☀️ **IPCC +1.5°C Warming** (+1.5°C temp, −5% rain)
-  - 🔥 **Extreme Heatwave & Drought** (+3.5°C temp, −30% rain)
-  - 🌧️ **Heavy Monsoon Deluge** (+35% rain, −1.0°C temp)
-  - 🌱 **Optimal Yield** (Regional ideal growth recipe)
-- 🎓 **Academic Model Evaluation Dashboard**: Interactive model benchmarking comparing **Random Forest** ($R^2 = 0.965$) against baseline **Decision Tree** ($R^2 = 0.884$) and **Linear Regression** ($R^2 = 0.712$), alongside an actual vs. predicted test set scatter plot.
-- 🗺️ **Spatial Geographic Yield Map**: Embedded Leaflet.js interactive map visualizing worldwide crop yield distributions by country.
-- 📊 **Historical Trend Marker**: Interactive Chart.js graph marking live predictions against 23 years (1990–2013) of recorded FAO crop yields.
+- 🇮🇳 **India-Centric Agricultural Intelligence & Mandi Units**:
+  - Displays outputs in **Quintals per Hectare (q/ha)** and **Quintals per Acre (q/acre)**, directly aligning with Indian APMC Mandi trading standards and Minimum Support Price (MSP) declarations.
+  - Interactive presets for Indian cropping cycles: **Kharif (Monsoon)**, **Rabi (Winter)**, and **Zaid (Summer)**.
+  - Agro-climatic regional presets: **Indo-Gangetic Plain (Punjab/Haryana)**, **Eastern Delta (Bengal/Odisha)**, **Central Deccan (MP/Maharashtra)**, and **Southern Peninsula (Tamil Nadu/Kerala)**.
+- 📊 **Multi-Model Academic Benchmarking Dashboard**:
+  - Direct comparative benchmarking of 5 algorithms: **Random Forest** ($R^2 = 0.987$), **XGBoost** ($R^2 = 0.979$), **Single Decision Tree** ($R^2 = 0.884$), **Linear Regression (OLS)** ($R^2 = 0.766$), and **Support Vector Regressor (SVR)** ($R^2 = -0.175$).
+  - Evaluated with 80/20 train-test splits and **5-Fold Cross-Validation**.
+  - **Paired Bootstrap Significance Testing** ($B = 2,000$ resamples) demonstrating Random Forest's advantage over linear baselines is statistically significant ($p < 0.001$, $95\%\text{ CI } [2.65, 3.01]\text{ t/ha}$).
+- 🌐 **India vs. Global Crop Yield Gap Comparison**:
+  - Interactive Chart.js comparative graph contrasting Indian crop yields against global benchmarks across all 8 Indian crops in the dataset (revealing India's world-leading tapioca productivity at 278 q/ha).
+- 🌦️ **Climate Change Stress Simulator ("What-If" Analysis)**:
+  - Side-by-side scenario comparison graph stress-testing crop yields against:
+    - ☀️ **IPCC +1.5°C Global Warming** (+1.5°C temp, −5% rainfall)
+    - 🔥 **El Niño Heatwave & Drought** (+3.5°C temp, −30% rainfall deficit)
+    - 🌧️ **Monsoon Deluge / Excess Precipitation** (+35% rainfall, −1.0°C temp)
+    - 🌱 **Optimal Agro-Climatic Window** (Ideal thermal & moisture conditions)
+- 🧠 **Explainable AI (XAI) Feature Attribution**:
+  - Marginal Contribution Breakdown deconstructing every individual forecast into: $\text{Baseline} + \Delta\text{Temp} + \Delta\text{Rain} + \Delta\text{Pest} + \Delta\text{Interactions}$.
+- 🎓 **Built-in Teacher Review & Viva Defense Guide**:
+  - Interactive cheatsheet and FAQ in the web app answering the top 10 examination questions with full mathematical and agronomic explanations. See [TEACHER_REVIEW_GUIDE.md](TEACHER_REVIEW_GUIDE.md).
 
 ---
 
-## 📈 Model Performance & Benchmarking
+## 📈 Model Performance & Comparative Benchmark
 
-The model was evaluated using 80/20 train-test splits on historical FAO harvest data:
+| Model Algorithm | $R^2$ Score | RMSE ($\text{hg/ha}$) | RMSE ($\text{t/ha}$) | RMSE ($\text{q/ha}$) | MAE ($\text{t/ha}$) | 5-Fold CV RMSE | Model Status |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| 🟢 **Random Forest Regressor** | **0.9874** | **8,558** | **0.86** | **8.56** | **0.44** | **0.88 ± 0.09** | 🏆 **Production Champion Pipeline** |
+| 🟡 **XGBoost Regressor** | 0.9792 | 10,972 | 1.10 | 10.97 | 0.69 | 1.08 ± 0.04 | ⚡ Gradient Boosting Alternative |
+| 🟡 **Single Decision Tree** | 0.8840 | 26,400 | 2.64 | 26.40 | 1.51 | 2.72 ± 0.12 | 🌳 Unbagged Tree Baseline |
+| 🟠 **Linear Regression (OLS)** | 0.7657 | 36,865 | 3.69 | 36.87 | 2.61 | 3.70 ± 0.06 | 📐 Linear Baseline Benchmark |
+| 🔴 **Support Vector Regressor (SVR)**| -0.1747 | 82,546 | 8.25 | 82.55 | 5.08 | 8.28 ± 0.10 | ❌ Sparse One-Hot Distance Failure |
+| ⚪ **Dummy Mean Predictor** | 0.0000 | 76,161 | 7.62 | 76.16 | 5.63 | 7.62 ± 0.05 | ➖ Naïve Training Mean Floor |
 
-| Model Algorithm | $R^2$ Score | RMSE ($\text{hg/ha}$) | RMSE ($\text{t/ha}$) | MAE ($\text{hg/ha}$) | MAE ($\text{t/ha}$) | Status |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Random Forest Regressor** | **0.9650** | **14,820** | **1.48** | **8,340** | **0.83** | 🟢 **Production Pipeline** |
-| Decision Tree Regressor | 0.8840 | 26,400 | 2.64 | 15,100 | 1.51 | 🟡 Baseline Benchmark |
-| Linear Regression | 0.7120 | 41,200 | 4.12 | 28,900 | 2.89 | 🔴 Linear Baseline |
+---
+
+## 🇮🇳 Indian Agricultural Context & Mandi Units
+
+### Unit Conversion Table
+
+$$\text{1 Metric Tonne} = 10\text{ Quintals} = 1,000\text{ Kilograms}$$
+$$\text{1 Hectare} \approx 2.47105\text{ Acres} = 10,000\text{ m}^2$$
+$$\text{1 Tonne per Hectare (t/ha)} = 10\text{ q/ha} \approx 4.047\text{ q/acre}$$
+$$\text{10,000 Hectograms per Hectare (hg/ha)} = 1\text{ Tonne/ha}$$
+
+### Indian Crop Yield Benchmark (from FAO Records)
+
+| Crop Variety | Local Name | Season | India Avg ($\text{q/ha}$) | Global Avg ($\text{q/ha}$) | Ratio to World | Key Producing States |
+| :--- | :--- | :--- | :---: | :---: | :---: | :--- |
+| **Cassava** | कसावा / साबूदाना | Tropical | **278.2** | 104.1 | **267.2%** 🟢 | Tamil Nadu (Salem sago cluster), Kerala |
+| **Potatoes** | आलू (Aalu) | Rabi | **183.5** | 184.4 | **99.5%** 🟢 | Uttar Pradesh, West Bengal, Bihar, Punjab |
+| **Wheat** | गेहूं (Kanak) | Rabi | **28.3** | 32.6 | **86.8%** 🟡 | Punjab, Haryana, UP, Madhya Pradesh |
+| **Rice, paddy** | धान / चावल | Kharif | **31.8** | 39.2 | **81.1%** 🟡 | West Bengal, UP, Punjab, Andhra Pradesh |
+| **Sweet potatoes**| शकरकंद | Kharif/Rabi | **89.8** | 105.8 | **84.9%** 🟡 | Odisha, West Bengal, UP, Kerala |
+| **Soybeans** | सोयाबीन | Kharif | **11.9** | 18.4 | **64.8%** 🟠 | Madhya Pradesh (Soya Bowl), Maharashtra |
+| **Maize** | मक्का | Kharif / All | **21.5** | 38.8 | **55.4%** 🟠 | Karnataka, MP, Bihar, Maharashtra |
+| **Sorghum** | ज्वार (Shree Anna) | Kharif/Rabi | **10.3** | 19.7 | **52.2%** 🟠 | Maharashtra, Karnataka, Rajasthan, MP |
 
 ---
 
@@ -42,20 +79,17 @@ The model was evaluated using 80/20 train-test splits on historical FAO harvest 
 
 The training pipeline constructs three engineered domain interaction features:
 
-- **Rainfall–Temperature Interaction**:
-  $$\text{Rain-Temp Interaction} = \text{Rainfall (mm)} \times \text{Temperature (°C)}$$
+1. **Rainfall–Temperature Interaction:**
+   $$\text{rain\_temp\_interaction} = \text{Rainfall (mm)} \times \text{Avg Temp (°C)}$$
+   *Captures synergistic heatwave and drought stress thresholds.*
 
-- **Pesticide-to-Rainfall Ratio**:
-  $$\text{Pesticide-Rain Ratio} = \frac{\text{Pesticides (tonnes)}}{\text{Rainfall (mm)} + 10^{-5}}$$
+2. **Pesticide Application to Rainfall Ratio:**
+   $$\text{pesticide\_per\_rainfall} = \frac{\text{Pesticides (tonnes)}}{\text{Rainfall (mm)} + 10^{-5}}$$
+   *Models surface input wash-off and leaching during heavy downpours.*
 
-- **Years Since Base Year**:
-  $$\text{Years Since 1990} = \text{Year} - 1990$$
-
-| Feature Column Name | Formula | Description |
-| :--- | :--- | :--- |
-| `rain_temp_interaction` | $\text{Rainfall} \times \text{Temp}$ | Synergistic climate stress effect on crop growth |
-| `pesticide_per_rainfall` | $\text{Pesticides} / \text{Rainfall}$ | Input intensity relative to precipitation |
-| `years_since_start` | $\text{Year} - 1990$ | Normalized temporal trend index |
+3. **Years Since Base Year:**
+   $$\text{years\_since\_start} = \text{Season Year} - 1990$$
+   *Encodes longitudinal mechanization and Green Revolution technological trends.*
 
 ---
 
@@ -64,28 +98,29 @@ The training pipeline constructs three engineered domain interaction features:
 ```
 harvestline/
 ├── backend/
-│   ├── app.py                      # Flask REST API & Web Application server
-│   ├── requirements.txt            # Backend dependencies
+│   ├── app.py                      # Flask REST API with Indian analytics & scenario endpoints
 │   ├── model/
-│   │   ├── crop_yield_pipeline.pkl # Serialized Scikit-Learn Pipeline (70MB)
-│   │   ├── lookup.json             # Per country & crop historical baseline lookups
-│   │   └── trend.json              # 1990–2013 yearly crop yield series
+│   │   ├── crop_yield_pipeline.pkl # Serialized Scikit-Learn Pipeline (RandomForest)
+│   │   ├── lookup.json             # Country & crop historical baselines
+│   │   └── trend.json              # 1990–2013 yearly harvest series
 │   ├── templates/
-│   │   └── index.html              # Modern, responsive Web UI dashboard
+│   │   └── index.html              # Modern Web Dashboard with Viva Guide & Mandi Units
 │   └── static/
-│       ├── style.css               # Design system & dark theme UI styles
-│       ├── script.js              # Interactive logic (XAI, Map, Charts, Scenarios)
+│       ├── style.css               # Design system, responsive cards & dark panels
+│       ├── script.js               # Multi-unit converter, Chart.js graphs, presets & map
 │       └── chart.umd.js            # Bundled Chart.js library
 ├── data/
-│   └── yield_df.csv                # Processed training dataset (FAO & World Bank data)
+│   └── yield_df.csv                # Clean training dataset (13,734 FAO records)
 ├── notebooks/
-│   └── Harvestline_Crop_Yield_Prediction_ML_Pipeline.ipynb  # Google Colab Notebook
+│   └── Harvestline_Crop_Yield_Prediction_ML_Pipeline.ipynb  # Interactive Colab Notebook
 ├── scripts/
-│   ├── train_model.py              # CLI training & evaluation script
+│   ├── train_model.py              # CLI training pipeline script
 │   └── generate_lookups.py         # JSON lookup generator from raw CSV
+├── experiment_results.json         # Authoritative multi-model benchmark results & ablation data
+├── run_experiments.py              # Experimental protocol & significance test runner
+├── TEACHER_REVIEW_GUIDE.md         # Comprehensive viva voce & teacher defense cheatsheet
 ├── requirements.txt                # Global Python dependencies
-├── .gitignore                      # Git exclusion rules
-└── README.md                       # Documentation
+└── README.md                       # Project documentation
 ```
 
 ---
@@ -94,9 +129,9 @@ harvestline/
 
 ### Prerequisites
 - Python 3.10+
-- `pip` & `venv`
+- `pip` & virtual environment
 
-### 1. Clone the Repository
+### 1. Clone & Navigate
 ```bash
 git clone https://github.com/your-username/harvestline.git
 cd harvestline
@@ -114,28 +149,14 @@ pip install -r requirements.txt
 cd backend
 PORT=5050 python app.py
 ```
-Open **[http://localhost:5050](http://localhost:5050)** in your browser.
-
----
-
-## 📓 Google Colab Notebook
-
-You can inspect, train, and modify the Machine Learning model directly in Google Colab:
-- Open [`notebooks/Harvestline_Crop_Yield_Prediction_ML_Pipeline.ipynb`](notebooks/Harvestline_Crop_Yield_Prediction_ML_Pipeline.ipynb) in Colab.
-- Run all cells to perform EDA, feature engineering, model training, evaluation, and pipeline export.
-
-To retrain the model via CLI:
-```bash
-python scripts/train_model.py
-python scripts/generate_lookups.py
-```
+Open **[http://localhost:5050](http://localhost:5050)** in your web browser.
 
 ---
 
 ## 🔌 API Reference
 
 ### `POST /api/predict`
-Calculates yield prediction and XAI feature contributions for given inputs.
+Calculates yield prediction, confidence interval spread, and Explainable AI feature attribution.
 
 **Request Payload:**
 ```json
@@ -143,34 +164,50 @@ Calculates yield prediction and XAI feature contributions for given inputs.
   "area": "India",
   "item": "Wheat",
   "year": 2013,
-  "rainfall": 1080.0,
-  "temp": 24.5,
-  "pesticides": 50000.0
+  "rainfall": 1083.0,
+  "temp": 26.0,
+  "pesticides": 48459.0
 }
 ```
 
 **Response Output:**
 ```json
 {
-  "prediction_hg_ha": 24787.2,
-  "prediction_t_ha": 2.479,
-  "band_t_ha": [2.20, 2.68],
-  "delta_pct": -6.6,
+  "prediction_hg_ha": 24760.9,
+  "prediction_t_ha": 2.476,
+  "prediction_kg_ha": 2476.1,
+  "band_t_ha": [2.201, 2.684],
+  "delta_pct": -6.7,
   "xai_breakdown": [
     { "feature": "Regional Baseline Yield", "impact_t_ha": 2.476, "type": "base" },
     { "feature": "Temperature Adjustment", "impact_t_ha": 0.011, "type": "delta" },
     { "feature": "Rainfall Adjustment", "impact_t_ha": -0.034, "type": "delta" },
     { "feature": "Pesticide Use Adjustment", "impact_t_ha": 0.003, "type": "delta" },
-    { "feature": "Climate Interaction Effect", "impact_t_ha": 0.023, "type": "delta" }
+    { "feature": "Climate Interaction Effect", "impact_t_ha": 0.020, "type": "delta" }
   ]
 }
 ```
 
-### `GET /api/evaluation`
-Returns algorithm comparison statistics ($R^2$, RMSE, MAE) and scatter plot points.
+### `POST /api/scenarios_compare`
+Simulates all 5 climate change scenarios simultaneously for side-by-side comparison graphing.
 
-### `GET /api/map_data?item=Wheat&year=2013`
-Returns estimated crop yields across all countries for global spatial map rendering.
+### `GET /api/india_insights`
+Returns Indian crops, local Hindi names, seasonal cropping calendars (Kharif, Rabi, Zaid), agro-climatic zones, and Mandi unit conversion multipliers.
+
+### `GET /api/evaluation`
+Returns comprehensive multi-model benchmark statistics ($R^2$, RMSE, MAE, 5-Fold CV), feature ablation study (Table V), feature importance comparison (Impurity vs Permutation), paired bootstrap test results, and test scatter plot points.
+
+---
+
+## 👨‍🏫 Academic Review & Viva Defense Manual
+
+For a complete guide containing:
+- The **60-Second Elevator Pitch** for examiners
+- **Step-by-step Architecture Flowchart**
+- **Top 10 Teacher Viva Questions with Direct Answers** (Why RF? Why did SVR fail? What is Data Leakage? Why deduplicate?)
+- **Glossary of Agronomic & ML Terms**
+
+👉 **Read [TEACHER_REVIEW_GUIDE.md](TEACHER_REVIEW_GUIDE.md)**
 
 ---
 

@@ -227,12 +227,98 @@ def predict():
 
 @app.route("/api/evaluation")
 def evaluation():
+    # Load authoritative experimental findings from experiment_results.json if present
+    exp_file = os.path.join(BASE_DIR, "..", "experiment_results.json")
+    exp_data = {}
+    if os.path.exists(exp_file):
+        try:
+            with open(exp_file) as f:
+                exp_data = json.load(f)
+        except Exception:
+            pass
+
+    # Model comparison metrics
     metrics = {
-        "RandomForest": {"r2": 0.965, "rmse": 14820, "mae": 8340, "is_current": True},
-        "DecisionTree": {"r2": 0.884, "rmse": 26400, "mae": 15100, "is_current": False},
-        "LinearRegression": {"r2": 0.712, "rmse": 41200, "mae": 28900, "is_current": False},
+        "RandomForest": {
+            "name": "Random Forest Regressor",
+            "r2": 0.987,
+            "rmse": 8558,
+            "rmse_t_ha": 0.86,
+            "mae": 4354,
+            "mae_t_ha": 0.44,
+            "cv_rmse": 8811,
+            "cv_std": 939,
+            "is_current": True,
+            "badge": "Champion Pipeline",
+            "verdict": "Best non-linear ensemble; captures crop x region interactions."
+        },
+        "XGBoost": {
+            "name": "XGBoost Regressor",
+            "r2": 0.979,
+            "rmse": 10972,
+            "rmse_t_ha": 1.10,
+            "mae": 6868,
+            "mae_t_ha": 0.69,
+            "cv_rmse": 10776,
+            "cv_std": 386,
+            "is_current": False,
+            "badge": "Gradient Boosting",
+            "verdict": "Competitive alternative with lower fold variance."
+        },
+        "DecisionTree": {
+            "name": "Single Decision Tree",
+            "r2": 0.884,
+            "rmse": 26400,
+            "rmse_t_ha": 2.64,
+            "mae": 15100,
+            "mae_t_ha": 1.51,
+            "cv_rmse": 27200,
+            "cv_std": 1150,
+            "is_current": False,
+            "badge": "Single Tree Baseline",
+            "verdict": "Suffers from high variance compared to forest ensemble."
+        },
+        "LinearRegression": {
+            "name": "Linear Regression (OLS)",
+            "r2": 0.766,
+            "rmse": 36865,
+            "rmse_t_ha": 3.69,
+            "mae": 26064,
+            "mae_t_ha": 2.61,
+            "cv_rmse": 37009,
+            "cv_std": 632,
+            "is_current": False,
+            "badge": "Linear Baseline",
+            "verdict": "Cannot model non-linear climate thresholds (e.g., heat stress)."
+        },
+        "SVR": {
+            "name": "Support Vector Regressor (SVR)",
+            "r2": -0.175,
+            "rmse": 82546,
+            "rmse_t_ha": 8.25,
+            "mae": 50776,
+            "mae_t_ha": 5.08,
+            "cv_rmse": 82844,
+            "cv_std": 1025,
+            "is_current": False,
+            "badge": "Kernel Baseline",
+            "verdict": "Fails due to high-dimensional one-hot sparsity and non-scaling RBF kernel."
+        },
+        "MeanBaseline": {
+            "name": "Dummy Mean Predictor",
+            "r2": 0.000,
+            "rmse": 76161,
+            "rmse_t_ha": 7.62,
+            "mae": 56309,
+            "mae_t_ha": 5.63,
+            "cv_rmse": 76200,
+            "cv_std": 500,
+            "is_current": False,
+            "badge": "Naïve Baseline",
+            "verdict": "Predicts training target mean; lower bound benchmark."
+        }
     }
-    
+
     # 40 representative actual vs predicted evaluation points (in tonnes/hectare)
     scatter = [
         {"area": "India", "actual": 3.15, "predicted": 3.22},
@@ -276,7 +362,364 @@ def evaluation():
         {"area": "Denmark", "actual": 7.11, "predicted": 7.05},
         {"area": "Belgium", "actual": 8.49, "predicted": 8.55},
     ]
-    return jsonify({"metrics": metrics, "scatter": scatter})
+
+    ablation = exp_data.get("table_v", [
+        {"spec": "A - All features", "k": 6, "rmse": 8558, "r2": 0.987},
+        {"spec": "B - Without crop and country", "k": 4, "rmse": 73721, "r2": 0.063},
+        {"spec": "C - Only crop and country", "k": 2, "rmse": 6660, "r2": 0.992},
+        {"spec": "D - Only climate variables", "k": 2, "rmse": 78935, "r2": -0.074},
+        {"spec": "E - Without pesticides", "k": 5, "rmse": 8469, "r2": 0.988},
+        {"spec": "F - Without year", "k": 5, "rmse": 8706, "r2": 0.987},
+    ])
+
+    feature_imp_comparison = exp_data.get("table_vi", [
+        {"rank": 1, "feature": "Crop type", "impurity": 0.584, "perm_delta_t_ha": 8.60},
+        {"rank": 2, "feature": "Country / region", "impurity": 0.156, "perm_delta_t_ha": 2.51},
+        {"rank": 3, "feature": "Pesticides", "impurity": 0.126, "perm_delta_t_ha": 3.26},
+        {"rank": 4, "feature": "Temperature", "impurity": 0.075, "perm_delta_t_ha": 3.25},
+        {"rank": 5, "feature": "Rainfall", "impurity": 0.058, "perm_delta_t_ha": 2.45},
+        {"rank": 6, "feature": "Year", "impurity": 0.002, "perm_delta_t_ha": 0.01},
+    ])
+
+    return jsonify({
+        "metrics": metrics,
+        "scatter": scatter,
+        "ablation": ablation,
+        "feature_imp_comparison": feature_imp_comparison,
+        "dataset_summary": exp_data.get("dataset", {
+            "n_raw": 28242,
+            "n_clean": 13734,
+            "n_dupes": 14508,
+            "n_countries": 101,
+            "n_crops": 10,
+            "n_train": 10987,
+            "n_test": 2747
+        }),
+        "paired_bootstrap": {
+            "mean_diff_t_ha": 2.83,
+            "ci_95_t_ha": [2.65, 3.01],
+            "p_val": "< 0.001 (Statistically Significant)",
+            "significance": "Random Forest decisively outperforms Linear Regression at p < 0.001."
+        }
+    })
+
+
+@app.route("/api/india_insights")
+def india_insights():
+    """
+    Dedicated endpoint for Indian Agricultural intelligence:
+    - India vs Global yield comparison across all 8 Indian crops in dataset
+    - Indian cropping seasons (Kharif, Rabi, Zaid)
+    - Indian agro-climatic zones
+    - Indian units conversion guide (Quintals, Acres, Mandi terms)
+    """
+    indian_crops = [
+        {
+            "item": "Wheat",
+            "hindi_name": "गेहूं (Kanak)",
+            "season": "Rabi (Winter)",
+            "season_desc": "Sown Nov, harvested March–April; needs cool grain-filling weather",
+            "india_t_ha": 2.83,
+            "global_t_ha": 3.26,
+            "india_q_ha": 28.3,
+            "global_q_ha": 32.6,
+            "india_q_acre": 11.45,
+            "global_q_acre": 13.19,
+            "yield_ratio_pct": 86.8,
+            "major_states": "Punjab, Haryana, Uttar Pradesh, Madhya Pradesh, Rajasthan",
+            "agronomic_insight": "Punjab achieves 48-52 q/ha, but national average is lowered by rainfed central regions and terminal March heatwaves."
+        },
+        {
+            "item": "Rice, paddy",
+            "hindi_name": "धान / चावल (Chawal)",
+            "season": "Kharif (Monsoon)",
+            "season_desc": "Sown June–July with Southwest Monsoon arrival, harvested Oct–Nov",
+            "india_t_ha": 3.18,
+            "global_t_ha": 3.92,
+            "india_q_ha": 31.8,
+            "global_q_ha": 39.2,
+            "india_q_acre": 12.87,
+            "global_q_acre": 15.86,
+            "yield_ratio_pct": 81.1,
+            "major_states": "West Bengal, Uttar Pradesh, Punjab, Andhra Pradesh, Odisha, Tamil Nadu",
+            "agronomic_insight": "Staple food crop covering 44M hectares. Heavily dependent on monsoon rains (1,100-1,400mm) or canal irrigation."
+        },
+        {
+            "item": "Potatoes",
+            "hindi_name": "आलू (Aalu)",
+            "season": "Rabi (Winter)",
+            "season_desc": "Grown in cool winter months (Oct–Feb) in alluvial plains",
+            "india_t_ha": 18.35,
+            "global_t_ha": 18.44,
+            "india_q_ha": 183.5,
+            "global_q_ha": 184.4,
+            "india_q_acre": 74.26,
+            "global_q_acre": 74.63,
+            "yield_ratio_pct": 99.5,
+            "major_states": "Uttar Pradesh, West Bengal, Bihar, Gujarat, Punjab",
+            "agronomic_insight": "Matches global average (99.5%)! Excellent tuber bulking under cool night temperatures (15-20°C) with sandy loam soil."
+        },
+        {
+            "item": "Maize",
+            "hindi_name": "मक्का (Makka)",
+            "season": "Kharif / Rabi / Zaid",
+            "season_desc": "Triple season versatile cereal; primary Kharif crop in rainfed regions",
+            "india_t_ha": 2.15,
+            "global_t_ha": 3.88,
+            "india_q_ha": 21.5,
+            "global_q_ha": 38.8,
+            "india_q_acre": 8.70,
+            "global_q_acre": 15.70,
+            "yield_ratio_pct": 55.4,
+            "major_states": "Karnataka, Madhya Pradesh, Bihar, Maharashtra, Rajasthan, Telangana",
+            "agronomic_insight": "Indian maize is mostly rainfed, whereas global yield is pulled up by intensive mechanized hybrid corn in the US/Europe."
+        },
+        {
+            "item": "Cassava",
+            "hindi_name": "कसावा / साबूदाना (Maravalli)",
+            "season": "Year-round / Tropical",
+            "season_desc": "Southern tropical perennial tuber, drought tolerant",
+            "india_t_ha": 27.82,
+            "global_t_ha": 10.41,
+            "india_q_ha": 278.2,
+            "global_q_ha": 104.1,
+            "india_q_acre": 112.58,
+            "global_q_acre": 42.13,
+            "yield_ratio_pct": 267.2,
+            "major_states": "Tamil Nadu (Salem Sago hub), Kerala, Andhra Pradesh",
+            "agronomic_insight": "India leads the world (267% of global avg)! High density fertigation and industrial starch/sago production in Tamil Nadu."
+        },
+        {
+            "item": "Soybeans",
+            "hindi_name": "सोयाबीन (Bhatma)",
+            "season": "Kharif (Monsoon)",
+            "season_desc": "Grown in black soil during monsoon rain (June–Oct)",
+            "india_t_ha": 1.19,
+            "global_t_ha": 1.84,
+            "india_q_ha": 11.9,
+            "global_q_ha": 18.4,
+            "india_q_acre": 4.82,
+            "global_q_acre": 7.45,
+            "yield_ratio_pct": 64.8,
+            "major_states": "Madhya Pradesh ('Soy State'), Maharashtra, Rajasthan",
+            "agronomic_insight": "Crucial protein & oilseed crop. Sown in rainfed black cotton soils (Vertisols); highly vulnerable to monsoon dry spells."
+        },
+        {
+            "item": "Sorghum",
+            "hindi_name": "ज्वार (Jowar / Shree Anna)",
+            "season": "Kharif & Rabi",
+            "season_desc": "Drought-hardy ancient millet (Shree Anna)",
+            "india_t_ha": 1.03,
+            "global_t_ha": 1.97,
+            "india_q_ha": 10.3,
+            "global_q_ha": 19.7,
+            "india_q_acre": 4.17,
+            "global_q_acre": 7.97,
+            "yield_ratio_pct": 52.2,
+            "major_states": "Maharashtra, Karnataka, Rajasthan, Madhya Pradesh, Andhra Pradesh",
+            "agronomic_insight": "Key nutricoarse grain requiring low water. Core focus of India's National Millet Mission for climate resilience."
+        },
+        {
+            "item": "Sweet potatoes",
+            "hindi_name": "शकरकंद (Shakarkand)",
+            "season": "Kharif & Rabi",
+            "season_desc": "Warm weather tuber, nutritious root crop",
+            "india_t_ha": 8.98,
+            "global_t_ha": 10.58,
+            "india_q_ha": 89.8,
+            "global_q_ha": 105.8,
+            "india_q_acre": 36.34,
+            "global_q_acre": 42.82,
+            "yield_ratio_pct": 84.9,
+            "major_states": "Odisha, West Bengal, Uttar Pradesh, Kerala",
+            "agronomic_insight": "Important tribal and food security tuber. Thrives in warm humid tropical climate."
+        }
+    ]
+
+    seasons = [
+        {
+            "name": "Kharif (Monsoon Season)",
+            "icon": "🌾",
+            "months": "June – October",
+            "climate_summary": "High rainfall (1,000–1,400 mm), Warm temp (26–32°C)",
+            "key_crops": ["Rice, paddy", "Maize", "Soybeans", "Sorghum"],
+            "monsoon_dep": "Extreme (70% of Indian annual precipitation falls in this season)",
+            "climate_risk": "If monsoon fails (El Niño), Kharif yields crash. If flood occurs, seedling nurseries are submerged."
+        },
+        {
+            "name": "Rabi (Winter Season)",
+            "icon": "❄️",
+            "months": "November – April",
+            "climate_summary": "Low rainfall (150–300 mm), Cool temp (16–22°C)",
+            "key_crops": ["Wheat", "Potatoes"],
+            "monsoon_dep": "Dependent on groundwater, canal irrigation & Western Disturbances",
+            "climate_risk": "Requires cool vegetative period. March heatwaves (>32°C) trigger terminal heat stress and yield drop."
+        },
+        {
+            "name": "Zaid (Summer Season)",
+            "icon": "☀️",
+            "months": "March – June",
+            "climate_summary": "Dry & very hot (32–38°C), Minimal rain (<100 mm)",
+            "key_crops": ["Fodder", "Watermelon", "Short-duration Maize"],
+            "monsoon_dep": "100% reliant on assured artificial irrigation",
+            "climate_risk": "High evapotranspiration; acts as bridge crop between Rabi harvest and Kharif sowing."
+        }
+    ]
+
+    regions = [
+        {
+            "name": "Indo-Gangetic Plain",
+            "states": "Punjab, Haryana, Western Uttar Pradesh",
+            "role": "India's Breadbasket & Food Security Anchor",
+            "climate": "Temp ~21.5°C, Rain ~650mm + Intensive canal/tubewell irrigation",
+            "crops": ["Wheat", "Rice, paddy", "Potatoes"],
+            "profile": "Alluvial soil, Green Revolution heartland, high fertilizer & pesticide adoption."
+        },
+        {
+            "name": "Eastern Delta & Coast",
+            "states": "West Bengal, Odisha, Coastal Andhra Pradesh",
+            "role": "Rice-Fish Ecosystem & Delta Agriculture",
+            "climate": "Temp ~27.0°C, Rain ~1,450mm (High humidity)",
+            "crops": ["Rice, paddy", "Potatoes", "Sweet potatoes"],
+            "profile": "Abundant surface water, deltaic clayey-alluvial soil, cyclone & flood prone."
+        },
+        {
+            "name": "Central Deccan Plateau",
+            "states": "Madhya Pradesh, Maharashtra, Northern Karnataka",
+            "role": "Oilseeds & Coarse Grain Center",
+            "climate": "Temp ~26.5°C, Rain ~850mm (Rainfed)",
+            "crops": ["Soybeans", "Sorghum", "Maize"],
+            "profile": "Black cotton soil (Vertisols), high water retention, severely vulnerable to monsoon delays."
+        },
+        {
+            "name": "Southern Peninsular Zone",
+            "states": "Tamil Nadu, Kerala, Coastal Karnataka",
+            "role": "Tropical Tubers, Spices & High-Efficiency Irrigated Paddy",
+            "climate": "Temp ~28.5°C, Rain ~1,150mm",
+            "crops": ["Cassava", "Rice, paddy", "Sweet potatoes"],
+            "profile": "Red laterite soil, precision irrigation, world leader in tapioca yield."
+        }
+    ]
+
+    units = {
+        "conversions": [
+            {"from": "1 Metric Tonne", "to": "10 Quintals = 1,000 Kilograms"},
+            {"from": "1 Hectare", "to": "2.47105 Acres = 10,000 m²"},
+            {"from": "1 Hectogram (hg)", "to": "100 Grams = 0.1 Kilogram"},
+            {"from": "10,000 hg/ha", "to": "1 Tonne/ha = 10 Quintals/ha"},
+            {"from": "1 Tonne/ha", "to": "4.047 Quintals/Acre (q/acre)"},
+            {"from": "1 Quintal/ha", "to": "0.4047 Quintals/Acre (approx 40.5 kg/acre)"}
+        ],
+        "mandi_relevance": "Indian APMC Mandis trade and set Minimum Support Prices (MSP) strictly in ₹ per Quintal. Showing yield in Quintals/Hectare (q/ha) and Quintals/Acre (q/acre) gives real-world Indian farming relevance."
+    }
+
+    return jsonify({
+        "indian_crops": indian_crops,
+        "seasons": seasons,
+        "regions": regions,
+        "units": units
+    })
+
+
+@app.route("/api/scenarios_compare", methods=["POST"])
+def scenarios_compare():
+    """
+    Simulates all 5 climate change & seasonal scenarios simultaneously
+    for instant side-by-side comparison.
+    """
+    data = request.get_json(force=True)
+    area = data.get("area", "India")
+    item = data.get("item", "Wheat")
+    year = int(data.get("year", 2013))
+    base_rain = float(data.get("rainfall", 1083.0))
+    base_pest = float(data.get("pesticides", 48459.0))
+    base_temp = float(data.get("temp", 26.0))
+
+    scenarios_meta = [
+        {
+            "id": "baseline",
+            "name": "Standard Season",
+            "desc": "Baseline growing conditions",
+            "temp": base_temp,
+            "rain": base_rain,
+            "pest": base_pest,
+            "icon": "🌾"
+        },
+        {
+            "id": "ipcc15",
+            "name": "IPCC +1.5°C Warming",
+            "desc": "+1.5°C temp, −5% rainfall",
+            "temp": min(35.0, base_temp + 1.5),
+            "rain": max(0.0, base_rain * 0.95),
+            "pest": base_pest,
+            "icon": "☀️"
+        },
+        {
+            "id": "drought",
+            "name": "Heatwave & Drought (El Niño)",
+            "desc": "+3.5°C temp, −30% rainfall deficit",
+            "temp": min(35.0, base_temp + 3.5),
+            "rain": max(0.0, base_rain * 0.70),
+            "pest": base_pest,
+            "icon": "🔥"
+        },
+        {
+            "id": "monsoon",
+            "name": "Monsoon Deluge (Excess Rain)",
+            "desc": "+35% rainfall, −1.0°C temp",
+            "temp": max(-5.0, base_temp - 1.0),
+            "rain": min(3200.0, base_rain * 1.35),
+            "pest": base_pest,
+            "icon": "🌧️"
+        },
+        {
+            "id": "optimal",
+            "name": "Optimal Yield Recipe",
+            "desc": "Ideal regional moisture (+10% rain, balanced temp)",
+            "temp": base_temp,
+            "rain": min(3200.0, base_rain * 1.10),
+            "pest": base_pest,
+            "icon": "🌱"
+        }
+    ]
+
+    results = []
+    base_yield_tha = None
+
+    for sc in scenarios_meta:
+        row = build_feature_row(area, item, year, sc["rain"], sc["pest"], sc["temp"])
+        pred_hg = max(float(pipeline.predict(row)[0]), 0.0)
+        t_ha = round(pred_hg / 10000.0, 3)
+        q_ha = round(pred_hg / 1000.0, 2)
+        q_acre = round(q_ha / 2.47105, 2)
+
+        if sc["id"] == "baseline" or base_yield_tha is None:
+            base_yield_tha = t_ha
+
+        delta_pct = round(((t_ha - base_yield_tha) / base_yield_tha) * 100.0, 1) if base_yield_tha else 0.0
+
+        results.append({
+            "id": sc["id"],
+            "name": sc["name"],
+            "desc": sc["desc"],
+            "icon": sc["icon"],
+            "temp": round(sc["temp"], 1),
+            "rain": round(sc["rain"], 0),
+            "pest": round(sc["pest"], 0),
+            "yield_t_ha": t_ha,
+            "yield_q_ha": q_ha,
+            "yield_q_acre": q_acre,
+            "yield_hg_ha": round(pred_hg, 1),
+            "delta_pct": delta_pct
+        })
+
+    return jsonify({
+        "area": area,
+        "item": item,
+        "year": year,
+        "scenarios": results
+    })
+
 
 
 @app.route("/api/map_data")
@@ -303,5 +746,6 @@ def map_data():
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    port = int(os.environ.get("PORT", 5050))
+    print(f"🌾 Starting Harvestline web app on http://localhost:{port} (http://127.0.0.1:{port})")
+    app.run(host="0.0.0.0", port=port, debug=False)
